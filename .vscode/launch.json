@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "C/C++: Запуск склада",
+            "name": "Запустить склад (g++-16)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/main",
@@ -12,7 +12,7 @@
             "environment": [],
             "externalConsole": false,
             "MIMode": "lldb",
-            "preLaunchTask": "C/C++: Сборка всего проекта"
+            "preLaunchTask": "Собрать проект лабы"
         }
     ]
 }

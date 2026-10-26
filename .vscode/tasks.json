@@ -2,20 +2,31 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Собрать проект лабы",
+            "type": "shell",
+            "command": "mkdir -p build && g++-16 -std=c++17 *.cpp -o build/main",
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
             "type": "cppbuild",
-            "label": "C/C++: Сборка всего проекта",
-            "command": "/usr/bin/clang++",
+            "label": "C/C++: clang сборка активного файла",
+            "command": "/usr/bin/clang",
             "args": [
                 "-fcolor-diagnostics",
                 "-fansi-escape-codes",
                 "-g",
-                "-std=c++17",
-                "${workspaceFolder}/*.cpp",
+                "${file}",
                 "-o",
-                "${workspaceFolder}/build/main"
+                "${fileDirname}/${fileBasenameNoExtension}"
             ],
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${fileDirname}"
             },
             "problemMatcher": [
                 "$gcc"
@@ -24,7 +35,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "detail": "Компилятор: /usr/bin/clang++"
+            "detail": "Задача создана отладчиком."
         }
     ]
 }
