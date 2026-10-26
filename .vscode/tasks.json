@@ -1,0 +1,30 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "C/C++: Сборка всего проекта",
+            "command": "/usr/bin/clang++",
+            "args": [
+                "-fcolor-diagnostics",
+                "-fansi-escape-codes",
+                "-g",
+                "-std=c++17",
+                "${workspaceFolder}/*.cpp",
+                "-o",
+                "${workspaceFolder}/build/main"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Компилятор: /usr/bin/clang++"
+        }
+    ]
+}
