@@ -1,62 +1,83 @@
 #pragma once
 #include "product.h"
 
+// --- Категория: Электроника ---
+class Electronics : public Product {
+protected:
+    int warrantyMonths_;
+public:
+    Electronics(int id, std::string name, Price p, Quantity q, Weight w, int warranty);
+    void print() const override;
+};
+
 class Smartphone : public Electronics {
 private:
-    std::string brand_;
+    std::string os_;
 public:
-    Smartphone(int id, const std::string& name, int price, int quantity, double weight, const std::string& brand = "Generic");
-    Smartphone(const Smartphone& other);
+    Smartphone(int id, std::string name, Price p, Quantity q, Weight w, int warranty, std::string os);
     std::unique_ptr<Product> clone() const override;
-    std::string toString() const override;
+    void print() const override;
 };
 
 class Laptop : public Electronics {
 private:
-    int ramGB_;
+    std::string cpu_;
 public:
-    Laptop(int id, const std::string& name, int price, int quantity, double weight, int ramGB = 8);
-    Laptop(const Laptop& other);
+    Laptop(int id, std::string name, Price p, Quantity q, Weight w, int warranty, std::string cpu);
     std::unique_ptr<Product> clone() const override;
-    std::string toString() const override;
+    void print() const override;
+};
+
+// --- Категория: Одежда ---
+class Clothing : public Product {
+protected:
+    std::string material_;
+public:
+    Clothing(int id, std::string name, Price p, Quantity q, Weight w, std::string material);
+    void print() const override;
 };
 
 class TShirt : public Clothing {
 private:
     std::string size_;
 public:
-    TShirt(int id, const std::string& name, int price, int quantity, double weight, const std::string& size = "M");
-    TShirt(const TShirt& other);
+    TShirt(int id, std::string name, Price p, Quantity q, Weight w, std::string material, std::string size);
     std::unique_ptr<Product> clone() const override;
-    std::string toString() const override;
+    void print() const override;
 };
 
 class Jacket : public Clothing {
 private:
-    std::string material_;
+    bool waterproof_;
 public:
-    Jacket(int id, const std::string& name, int price, int quantity, double weight, const std::string& material = "Cotton");
-    Jacket(const Jacket& other);
+    Jacket(int id, std::string name, Price p, Quantity q, Weight w, std::string material, bool waterproof);
     std::unique_ptr<Product> clone() const override;
-    std::string toString() const override;
+    void print() const override;
+};
+
+// --- Категория: Продукты питания ---
+class Food : public Product {
+protected:
+    int expirationDays_;
+public:
+    Food(int id, std::string name, Price p, Quantity q, Weight w, int expDays);
+    void print() const override;
 };
 
 class Milk : public Food {
 private:
-    double fatPercent_;
+    double fatContent_;
 public:
-    Milk(int id, const std::string& name, int price, int quantity, double weight, double fatPercent = 2.5);
-    Milk(const Milk& other);
+    Milk(int id, std::string name, Price p, Quantity q, Weight w, int expDays, double fat);
     std::unique_ptr<Product> clone() const override;
-    std::string toString() const override;
+    void print() const override;
 };
 
 class Bread : public Food {
 private:
-    std::string type_;
+    bool wholeGrain_;
 public:
-    Bread(int id, const std::string& name, int price, int quantity, double weight, const std::string& type = "White");
-    Bread(const Bread& other);
+    Bread(int id, std::string name, Price p, Quantity q, Weight w, int expDays, bool wholeGrain);
     std::unique_ptr<Product> clone() const override;
-    std::string toString() const override;
+    void print() const override;
 };

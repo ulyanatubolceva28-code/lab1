@@ -1,48 +1,69 @@
 #pragma once
+#include <string>
 #include <vector>
 #include <memory>
-#include <string>
 #include "product.h"
 
+// Неконстантный итератор
 class WarehouseIterator {
 private:
-    std::vector<std::unique_ptr<Product>>::iterator current_;
-    std::vector<std::unique_ptr<Product>>::iterator end_;
+    std::unique_ptr<Product>* ptr_;
 public:
-    WarehouseIterator(std::vector<std::unique_ptr<Product>>::iterator current,
-                      std::vector<std::unique_ptr<Product>>::iterator end);
+    explicit WarehouseIterator(std::unique_ptr<Product>* ptr);
+    Product& operator*();
+    Product* operator->();
     WarehouseIterator& operator++();
-    WarehouseIterator operator++(int);
-    Product& operator*() const;
     bool operator!=(const WarehouseIterator& other) const;
     bool operator==(const WarehouseIterator& other) const;
 };
 
+// Константный итератор (Const-safety)
+class ConstWarehouseIterator {
+private:
+    const std::unique_ptr<Product>* ptr_;
+public:
+    explicit ConstWarehouseIterator(const std::unique_ptr<Product>* ptr);
+    const Product& operator*() const;
+    const Product* operator->() const;
+    ConstWarehouseIterator& operator++();
+    bool operator!=(const ConstWarehouseIterator& other) const;
+    bool operator==(const ConstWarehouseIterator& other) const;
+};
+
 class Warehouse {
 private:
+    std::string name_;
+    size_t capacity_;
     std::vector<std::unique_ptr<Product>> products_;
-    size_t maxSize_;
+
 public:
-    Warehouse(size_t maxSize);
+    Warehouse(std::string name, size_t capacity);
+    ~Warehouse() = default;
+
+    // Правило пяти (Rule of Five)
     Warehouse(const Warehouse& other);
     Warehouse& operator=(const Warehouse& other);
     Warehouse(Warehouse&& other) noexcept;
     Warehouse& operator=(Warehouse&& other) noexcept;
-    ~Warehouse() = default;
 
     void addProduct(std::unique_ptr<Product> product);
-    void removeById(int id);
-    void removeByIndex(size_t index);
+    std::unique_ptr<Product> extractById(int id);
+    bool removeById(int id);
     Product* findById(int id) const;
-    std::vector<Product*> findByCategory(const std::string& category) const;
-    std::vector<Product*> findByPrice(const Price& price) const;
 
+    size_t size() const;
+    size_t capacity() const;
+    bool isFull() const;
+    std::string getName() const;
+    void printAll() const;
+
+    void transferProduct(int id, Warehouse& target);
+
+    // Поддержка Range-based for циклов
     WarehouseIterator begin();
     WarehouseIterator end();
-    WarehouseIterator begin() const;
-    WarehouseIterator end() const;
-
-    size_t getSize() const;
-    size_t getMaxSize() const;
-    void printAll() const;
+    ConstWarehouseIterator begin() const;
+    ConstWarehouseIterator end() const;
+    ConstWarehouseIterator cbegin() const;
+    ConstWarehouseIterator cend() const;
 };

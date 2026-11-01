@@ -1,136 +1,92 @@
 #include <iostream>
-#include "warehouse.h"
-#include "products.h"
 #include "factory.h"
-#include "logging.h"
-
-void scenario1() {
-    std::cout << "\n=== СЦЕНАРИЙ 1: Создание склада, фабрики, итератор ===\n";
-    Warehouse wh(10);
-
-    SmartphoneFactory sf; LaptopFactory lf; TShirtFactory tsf;
-    JacketFactory jf; MilkFactory mf; BreadFactory bf;
-
-    LoggingProxy::logWarehouseAdd(wh, LoggingProxy::logFactoryCreate(sf, "iPhone 15", 999, 50, 0.2));
-    LoggingProxy::logWarehouseAdd(wh, LoggingProxy::logFactoryCreate(lf, "MacBook Pro", 2499, 20, 1.6));
-    LoggingProxy::logWarehouseAdd(wh, LoggingProxy::logFactoryCreate(tsf, "Cotton T-Shirt", 29, 100, 0.2));
-    LoggingProxy::logWarehouseAdd(wh, LoggingProxy::logFactoryCreate(jf, "Leather Jacket", 199, 30, 1.2));
-    LoggingProxy::logWarehouseAdd(wh, LoggingProxy::logFactoryCreate(mf, "Whole Milk", 3, 200, 1.0));
-    LoggingProxy::logWarehouseAdd(wh, LoggingProxy::logFactoryCreate(bf, "Sourdough Bread", 5, 150, 0.5));
-
-    std::cout << "\n--- Все товары через итератор: ---" << std::endl;
-    for (auto& p : wh) std::cout << p.toString() << std::endl;
-}
-
-void scenario2() {
-    std::cout << "\n=== СЦЕНАРИЙ 2: Копирование склада ===\n";
-    Warehouse wh1(10);
-    SmartphoneFactory sf;
-    wh1.addProduct(sf.createProduct(0, "Samsung Galaxy", 799, 40, 0.19));
-    wh1.addProduct(sf.createProduct(0, "Google Pixel", 699, 30, 0.18));
-
-    Warehouse wh2(wh1);
-
-    std::cout << "\n--- Оригинал до изменения: ---" << std::endl;
-    wh1.printAll();
-
-    for (auto& p : wh2) LoggingProxy::logChangeQuantity(p, -10);
-
-    std::cout << "\n--- Копия после изменения: ---" << std::endl;
-    wh2.printAll();
-
-    std::cout << "\n--- Оригинал (не изменён): ---" << std::endl;
-    wh1.printAll();
-}
-
-void scenario3() {
-    std::cout << "\n=== СЦЕНАРИЙ 3: Перемещение склада ===\n";
-    Warehouse wh1(10);
-    LaptopFactory lf;
-    wh1.addProduct(lf.createProduct(0, "Dell XPS", 1299, 15, 1.8));
-    wh1.addProduct(lf.createProduct(0, "HP Spectre", 1199, 10, 1.5));
-
-    std::cout << "\n--- wh1 до перемещения: ---" << std::endl;
-    wh1.printAll();
-
-    Warehouse wh2(std::move(wh1));
-
-    std::cout << "\n--- wh2 после перемещения: ---" << std::endl;
-    wh2.printAll();
-    std::cout << "wh1 size after move: " << wh1.getSize() << std::endl;
-}
-
-void scenario4() {
-    std::cout << "\n=== СЦЕНАРИЙ 4: Поиск и удаление ===\n";
-    Warehouse wh(10);
-    SmartphoneFactory sf; TShirtFactory tsf; MilkFactory mf;
-
-    auto p1 = sf.createProduct(0, "iPhone", 999, 50, 0.2);
-    auto p2 = sf.createProduct(0, "Samsung", 799, 40, 0.19);
-    auto p3 = tsf.createProduct(0, "T-Shirt", 29, 100, 0.2);
-    auto p4 = mf.createProduct(0, "Milk", 3, 200, 1.0);
-
-    int id1 = p1->getId();
-    int id2 = p2->getId();
-
-    wh.addProduct(std::move(p1));
-    wh.addProduct(std::move(p2));
-    wh.addProduct(std::move(p3));
-    wh.addProduct(std::move(p4));
-
-    // Поиск по ID
-    Product* found = wh.findById(id1);
-    if (found) std::cout << "\nНайден по ID=" << id1 << ": " << found->toString() << std::endl;
-
-    // Поиск по категории
-    auto electronics = wh.findByCategory("electronics");
-    std::cout << "\nЭлектроника (" << electronics.size() << "):" << std::endl;
-    for (auto* p : electronics) std::cout << "  " << p->toString() << std::endl;
-
-    // Удаление по ID
-    LoggingProxy::logWarehouseRemoveById(wh, id2);
-    std::cout << "\nПосле удаления ID=" << id2 << ":" << std::endl;
-    wh.printAll();
-
-    // Удаление по индексу
-    wh.removeByIndex(0);
-    std::cout << "\nПосле удаления по индексу 0:" << std::endl;
-    wh.printAll();
-}
-
-void scenario5() {
-    std::cout << "\n=== СЦЕНАРИЙ 5: transferTo, изменение цены/остатка ===\n";
-    Warehouse wh1(10), wh2(10);
-    SmartphoneFactory sf;
-    wh1.addProduct(sf.createProduct(0, "iPhone 15 Pro", 1199, 50, 0.22));
-
-    std::cout << "\n--- wh1 до transferTo: ---" << std::endl;
-    wh1.printAll();
-
-    Product* p = wh1.findById(wh1.begin() != wh1.end() ? (*wh1.begin()).getId() : -1);
-    if (p) p->transferTo(wh2);
-
-    std::cout << "\n--- wh2 после transferTo: ---" << std::endl;
-    wh2.printAll();
-
-    // Изменяем первый товар в wh2
-    for (auto& prod : wh2) {
-        LoggingProxy::logChangeQuantity(prod, -5);
-        LoggingProxy::logSetPrice(prod, Price(1099));
-        break; // только первый
-    }
-
-    std::cout << "\n--- wh2 после изменений: ---" << std::endl;
-    wh2.printAll();
-}
+#include "warehouse.h"
 
 int main() {
     try {
-        scenario1(); scenario2(); scenario3(); scenario4(); scenario5();
-        std::cout << "\nВсе сценарии выполнены успешно!" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cout << "========== 1. СОЗДАНИЕ СКЛАДОВ ==========\n";
+        Warehouse whA("Главный Склад А", 5);
+        Warehouse whB("Филиал Б", 3);
+
+        std::cout << "\n========== 2. СОЗДАНИЕ ТОВАРОВ (FACTORY: ID АВТО / ВРУЧНУЮ) ==========\n";
+        // ID == 0 -> сгенерируются: 1, 2, 3
+        auto p1 = ProductFactory::createSmartphone(0, "iPhone 15", 999.99, 10, 0.2, 12, "iOS");
+        auto p2 = ProductFactory::createLaptop(0, "MacBook Pro", 2499.00, 5, 1.5, 24, "M3 Pro");
+        auto p3 = ProductFactory::createTShirt(0, "Polo", 45.0, 50, 0.25, "Хлопок", "M");
+
+        // Явно переданный ID
+        auto pExplicit = ProductFactory::createMilk(777, "Фермерское молоко", 2.5, 100, 1.0, 5, 3.8);
+
+        std::cout << "Товар 1: ID = " << p1->getId() << " (сгенерирован автоматически)\n";
+        std::cout << "Товар 2: ID = " << p2->getId() << " (сгенерирован автоматически)\n";
+        std::cout << "Товар 3: ID = " << p3->getId() << " (сгенерирован автоматически)\n";
+        std::cout << "Товар 4: ID = " << pExplicit->getId() << " (задан вручную: 777)\n";
+
+        // Следующий авто-ID станет 778
+        auto pAutoNext = ProductFactory::createBread(0, "Бородинский", 1.2, 30, 0.4, 4, false);
+        std::cout << "Товар 5: ID = " << pAutoNext->getId() << " (автоматически после 777)\n";
+
+        std::cout << "\n========== 3. ДОБАВЛЕНИЕ ТОВАРОВ НА СКЛАД ==========\n";
+        whA.addProduct(std::move(p1));
+        whA.addProduct(std::move(p2));
+        whA.addProduct(std::move(p3));
+        whA.addProduct(std::move(pExplicit));
+        whA.addProduct(std::move(pAutoNext));
+
+        whA.printAll();
+
+        std::cout << "\n========== 4. ПРОВЕРКА ЛИМИТА ВМЕСТИМОСТИ ==========\n";
+        try {
+            auto overflowItem = ProductFactory::createBread(0, "Батон", 0.9, 10, 0.3, 2, false);
+            whA.addProduct(std::move(overflowItem));
+        } catch (const std::exception& e) {
+            std::cout << "[Ожидаемый перехват ошибки]: " << e.what() << "\n";
+        }
+
+        std::cout << "\n========== 5. ИТЕРАТОР И ОПЕРАТОР '->' ==========\n";
+        std::cout << "Обход склада через range-based for:\n";
+        for (auto& item : whA) {
+            std::cout << "  - Товар #" << item.getId() << ": " << item.getName() 
+                      << " (Цена: " << item.getPrice() << "$)\n";
+        }
+
+        std::cout << "\nКонстантный обход (ConstWarehouseIterator):\n";
+        const Warehouse& constRefA = whA;
+        for (const auto& item : constRefA) {
+            std::cout << "  [Const] " << item.getName() << " | Вес: " << item.getWeight() << " кг\n";
+        }
+
+        std::cout << "\n========== 6. ИСТИННЫЙ ПЕРЕНОС ТОВАРА (TRANSFERTO) ==========\n";
+        Product* macbook = whA.findById(2);
+        if (macbook) {
+            std::cout << "Вызов macbook->transferTo(whB)...\n";
+            macbook->transferTo(whB); // Перенос вызывается у самого товара
+        }
+
+        whA.printAll();
+        whB.printAll();
+
+        std::cout << "\n========== 7. ГЛУБОКОЕ КОПИРОВАНИЕ (RULE OF FIVE) ==========\n";
+        Warehouse whACopy = whA;
+        std::cout << "Создана копия whA. Проверяем идентичность ID товаров:\n";
+        whACopy.printAll();
+
+        std::cout << "\n========== 8. ПЕРЕМЕЩЕНИЕ СКЛАДА (MOVE SEMANTICS) ==========\n";
+        Warehouse whMoved = std::move(whACopy);
+        std::cout << "Склад перемещен. Проверяем обновление владельца у товаров:\n";
+        whMoved.printAll();
+
+        std::cout << "\n========== 9. УДАЛЕНИЕ ПО ID ==========\n";
+        std::cout << "Удаляем товар с ID 1...\n";
+        whA.removeById(1);
+        whA.printAll();
+
+        std::cout << "\nВСЕ ТЕСТЫ И СЦЕНАРИИ УСПЕШНО ЗАВЕРШЕНЫ!\n";
+
+    } catch (const std::exception& ex) {
+        std::cerr << "Критическая ошибка: " << ex.what() << "\n";
         return 1;
     }
+
     return 0;
 }

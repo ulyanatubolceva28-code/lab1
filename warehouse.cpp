@@ -1,151 +1,142 @@
 #include "warehouse.h"
-#include <iostream>
 #include <algorithm>
-#include <stdexcept>
+#include <iostream>
 
-WarehouseIterator::WarehouseIterator(
-    std::vector<std::unique_ptr<Product>>::iterator current,
-    std::vector<std::unique_ptr<Product>>::iterator end)
-    : current_(current), end_(end) {}
+// --- Итераторы ---
+WarehouseIterator::WarehouseIterator(std::unique_ptr<Product>* ptr) : ptr_(ptr) {}
+Product& WarehouseIterator::operator*() { return **ptr_; }
+Product* WarehouseIterator::operator->() { return ptr_->get(); }
+WarehouseIterator& WarehouseIterator::operator++() { ++ptr_; return *this; }
+bool WarehouseIterator::operator!=(const WarehouseIterator& other) const { return ptr_ != other.ptr_; }
+bool WarehouseIterator::operator==(const WarehouseIterator& other) const { return ptr_ == other.ptr_; }
 
-WarehouseIterator& WarehouseIterator::operator++() {
-    ++current_;
-    return *this;
-}
+ConstWarehouseIterator::ConstWarehouseIterator(const std::unique_ptr<Product>* ptr) : ptr_(ptr) {}
+const Product& ConstWarehouseIterator::operator*() const { return **ptr_; }
+const Product* ConstWarehouseIterator::operator->() const { return ptr_->get(); }
+ConstWarehouseIterator& ConstWarehouseIterator::operator++() { ++ptr_; return *this; }
+bool ConstWarehouseIterator::operator!=(const ConstWarehouseIterator& other) const { return ptr_ != other.ptr_; }
+bool ConstWarehouseIterator::operator==(const ConstWarehouseIterator& other) const { return ptr_ == other.ptr_; }
 
-WarehouseIterator WarehouseIterator::operator++(int) {
-    WarehouseIterator tmp = *this;
-    ++current_;
-    return tmp;
-}
+// --- Склад ---
+Warehouse::Warehouse(std::string name, size_t capacity) 
+    : name_(std::move(name)), capacity_(capacity) {}
 
-Product& WarehouseIterator::operator*() const {
-    return **current_;
-}
-
-bool WarehouseIterator::operator!=(const WarehouseIterator& other) const {
-    return current_ != other.current_;
-}
-
-bool WarehouseIterator::operator==(const WarehouseIterator& other) const {
-    return current_ == other.current_;
-}
-
-// Warehouse
-Warehouse::Warehouse(size_t maxSize) : maxSize_(maxSize) {
-    if (maxSize == 0) throw std::invalid_argument("Max size must be positive");
-}
-
-Warehouse::Warehouse(const Warehouse& other) : maxSize_(other.maxSize_) {
+// Глубокое копирование с сохранением ID
+Warehouse::Warehouse(const Warehouse& other) : name_(other.name_ + " (Copy)"), capacity_(other.capacity_) {
     products_.reserve(other.products_.size());
-    for (const auto& p : other.products_) {
-        products_.push_back(p->clone());
+    for (const auto& item : other.products_) {
+        auto cloned = item->clone();
+        cloned->setOwner(this);
+        products_.push_back(std::move(cloned));
     }
 }
 
+// Copy-and-Swap для гарантии безопасности исключений
 Warehouse& Warehouse::operator=(const Warehouse& other) {
     if (this != &other) {
-        products_.clear();
-        maxSize_ = other.maxSize_;
-        products_.reserve(other.products_.size());
-        for (const auto& p : other.products_) {
-            products_.push_back(p->clone());
-        }
+        Warehouse temp(other);
+        *this = std::move(temp);
     }
     return *this;
 }
 
+// Конструктор перемещения
 Warehouse::Warehouse(Warehouse&& other) noexcept
-    : products_(std::move(other.products_)), maxSize_(other.maxSize_) {
-    other.maxSize_ = 0;
+    : name_(std::move(other.name_)), capacity_(other.capacity_), products_(std::move(other.products_)) {
+    for (auto& item : products_) {
+        item->setOwner(this);
+    }
+    other.capacity_ = 0;
 }
 
+// Оператор присваивания перемещением
 Warehouse& Warehouse::operator=(Warehouse&& other) noexcept {
     if (this != &other) {
+        name_ = std::move(other.name_);
+        capacity_ = other.capacity_;
         products_ = std::move(other.products_);
-        maxSize_ = other.maxSize_;
-        other.maxSize_ = 0;
+        for (auto& item : products_) {
+            item->setOwner(this);
+        }
+        other.capacity_ = 0;
     }
     return *this;
 }
 
 void Warehouse::addProduct(std::unique_ptr<Product> product) {
-    if (products_.size() >= maxSize_) {
-        throw std::overflow_error("Warehouse is full");
+    if (!product) {
+        throw std::invalid_argument("Попытка добавить nullptr");
     }
+    if (products_.size() >= capacity_) {
+        throw std::runtime_error("Склад '" + name_ + "' полон! Вместимость: " + std::to_string(capacity_));
+    }
+    product->setOwner(this);
     products_.push_back(std::move(product));
 }
 
-void Warehouse::removeById(int id) {
-    auto it = std::find_if(products_.begin(), products_.end(),
-        [id](const std::unique_ptr<Product>& p) { return p->getId() == id; });
-    if (it != products_.end()) {
-        products_.erase(it);
-    } else {
-        throw std::runtime_error("Product with id " + std::to_string(id) + " not found");
-    }
-}
-
-void Warehouse::removeByIndex(size_t index) {
-    if (index >= products_.size()) {
-        throw std::out_of_range("Index out of range");
-    }
-    products_.erase(products_.begin() + index);
-}
-
-Product* Warehouse::findById(int id) const {
-    for (const auto& p : products_) {
-        if (p->getId() == id) return p.get();
+std::unique_ptr<Product> Warehouse::extractById(int id) {
+    for (auto it = products_.begin(); it != products_.end(); ++it) {
+        if ((*it)->getId() == id) {
+            std::unique_ptr<Product> found = std::move(*it);
+            products_.erase(it);
+            found->setOwner(nullptr);
+            return found;
+        }
     }
     return nullptr;
 }
 
-std::vector<Product*> Warehouse::findByCategory(const std::string& category) const {
-    std::vector<Product*> result;
-    for (const auto& p : products_) {
-        if (p->getCategory() == category) result.push_back(p.get());
+bool Warehouse::removeById(int id) {
+    auto item = extractById(id);
+    return item != nullptr; // item безопасно уничтожается здесь
+}
+
+Product* Warehouse::findById(int id) const {
+    for (const auto& item : products_) {
+        if (item->getId() == id) {
+            return item.get();
+        }
     }
-    return result;
+    return nullptr;
 }
 
-std::vector<Product*> Warehouse::findByPrice(const Price& price) const {
-    std::vector<Product*> result;
-    for (const auto& p : products_) {
-        if (p->getPrice().getValue() == price.getValue()) result.push_back(p.get());
+void Warehouse::transferProduct(int id, Warehouse& target) {
+    if (this == &target) {
+        throw std::invalid_argument("Нельзя перенести товар на тот же самый склад");
     }
-    return result;
+    // Проверка лимита целевого склада ДО извлечения (Strong Exception Guarantee)
+    if (target.isFull()) {
+        throw std::runtime_error("Перенос невозможен: целевой склад '" + target.getName() + "' переполнен");
+    }
+
+    auto item = extractById(id);
+    if (!item) {
+        throw std::runtime_error("Товар с ID " + std::to_string(id) + " не найден на складе '" + name_ + "'");
+    }
+    target.addProduct(std::move(item));
 }
 
-WarehouseIterator Warehouse::begin() {
-    return WarehouseIterator(products_.begin(), products_.end());
-}
-
-WarehouseIterator Warehouse::end() {
-    return WarehouseIterator(products_.end(), products_.end());
-}
-
-WarehouseIterator Warehouse::begin() const {
-    auto& self = const_cast<std::vector<std::unique_ptr<Product>>&>(products_);
-    return WarehouseIterator(self.begin(), self.end());
-}
-
-WarehouseIterator Warehouse::end() const {
-    auto& self = const_cast<std::vector<std::unique_ptr<Product>>&>(products_);
-    return WarehouseIterator(self.end(), self.end());
-}
-
-size_t Warehouse::getSize() const {
-    return products_.size();
-}
-
-size_t Warehouse::getMaxSize() const {
-    return maxSize_;
-}
+size_t Warehouse::size() const { return products_.size(); }
+size_t Warehouse::capacity() const { return capacity_; }
+bool Warehouse::isFull() const { return products_.size() >= capacity_; }
+std::string Warehouse::getName() const { return name_; }
 
 void Warehouse::printAll() const {
-    std::cout << "=== Warehouse (" << getSize() << "/" << getMaxSize() << ") ===" << std::endl;
-    for (const auto& p : products_) {
-        std::cout << p->toString() << std::endl;
+    std::cout << "\n=== Склад: " << name_ << " (Занято: " << size() << "/" << capacity_ << ") ===\n";
+    if (products_.empty()) {
+        std::cout << "  [Склад пуст]\n";
+        return;
     }
-    std::cout << "========================================" << std::endl;
+    for (const auto& item : products_) {
+        std::cout << "  ";
+        item->print();
+    }
 }
+
+// Итераторы
+WarehouseIterator Warehouse::begin() { return WarehouseIterator(products_.data()); }
+WarehouseIterator Warehouse::end() { return WarehouseIterator(products_.data() + products_.size()); }
+ConstWarehouseIterator Warehouse::begin() const { return ConstWarehouseIterator(products_.data()); }
+ConstWarehouseIterator Warehouse::end() const { return ConstWarehouseIterator(products_.data() + products_.size()); }
+ConstWarehouseIterator Warehouse::cbegin() const { return ConstWarehouseIterator(products_.data()); }
+ConstWarehouseIterator Warehouse::cend() const { return ConstWarehouseIterator(products_.data() + products_.size()); }

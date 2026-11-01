@@ -1,44 +1,104 @@
 #include "products.h"
-#include <sstream>
+#include <iomanip>
 
-// Smartphone
-Smartphone::Smartphone(int id, const std::string& name, int price, int quantity, double weight, const std::string& brand)
-    : Electronics(name, price, quantity, weight), brand_(brand) {}
-Smartphone::Smartphone(const Smartphone& other) : Electronics(other), brand_(other.brand_) {}
-std::unique_ptr<Product> Smartphone::clone() const { return std::make_unique<Smartphone>(*this); }
-std::string Smartphone::toString() const { return Electronics::toString() + " | Brand:" + brand_; }
+// Electronics
+Electronics::Electronics(int id, std::string name, Price p, Quantity q, Weight w, int warranty)
+    : Product(id, std::move(name), p, q, w), warrantyMonths_(warranty) {}
 
-// Laptop
-Laptop::Laptop(int id, const std::string& name, int price, int quantity, double weight, int ramGB)
-    : Electronics(name, price, quantity, weight), ramGB_(ramGB) {}
-Laptop::Laptop(const Laptop& other) : Electronics(other), ramGB_(other.ramGB_) {}
-std::unique_ptr<Product> Laptop::clone() const { return std::make_unique<Laptop>(*this); }
-std::string Laptop::toString() const { return Electronics::toString() + " | RAM:" + std::to_string(ramGB_) + "GB"; }
+void Electronics::print() const {
+    std::cout << "[Electronics] ID: " << id_ << " | " << name_ 
+              << " | Цена: " << price_.getValue() << " | Кол-во: " << quantity_.getValue()
+              << " | Вес: " << weight_.getValue() << " кг | Гарантия: " << warrantyMonths_ << " мес.";
+}
 
-// TShirt
-TShirt::TShirt(int id, const std::string& name, int price, int quantity, double weight, const std::string& size)
-    : Clothing(name, price, quantity, weight), size_(size) {}
-TShirt::TShirt(const TShirt& other) : Clothing(other), size_(other.size_) {}
-std::unique_ptr<Product> TShirt::clone() const { return std::make_unique<TShirt>(*this); }
-std::string TShirt::toString() const { return Clothing::toString() + " | Size:" + size_; }
+Smartphone::Smartphone(int id, std::string name, Price p, Quantity q, Weight w, int warranty, std::string os)
+    : Electronics(id, std::move(name), p, q, w, warranty), os_(std::move(os)) {}
 
-// Jacket
-Jacket::Jacket(int id, const std::string& name, int price, int quantity, double weight, const std::string& material)
-    : Clothing(name, price, quantity, weight), material_(material) {}
-Jacket::Jacket(const Jacket& other) : Clothing(other), material_(other.material_) {}
-std::unique_ptr<Product> Jacket::clone() const { return std::make_unique<Jacket>(*this); }
-std::string Jacket::toString() const { return Clothing::toString() + " | Material:" + material_; }
+std::unique_ptr<Product> Smartphone::clone() const {
+    return std::make_unique<Smartphone>(id_, name_, price_, quantity_, weight_, warrantyMonths_, os_);
+}
 
-// Milk
-Milk::Milk(int id, const std::string& name, int price, int quantity, double weight, double fatPercent)
-    : Food(name, price, quantity, weight), fatPercent_(fatPercent) {}
-Milk::Milk(const Milk& other) : Food(other), fatPercent_(other.fatPercent_) {}
-std::unique_ptr<Product> Milk::clone() const { return std::make_unique<Milk>(*this); }
-std::string Milk::toString() const { return Food::toString() + " | Fat:" + std::to_string(fatPercent_) + "%"; }
+void Smartphone::print() const {
+    Electronics::print();
+    std::cout << " | OS: " << os_ << "\n";
+}
 
-// Bread
-Bread::Bread(int id, const std::string& name, int price, int quantity, double weight, const std::string& type)
-    : Food(name, price, quantity, weight), type_(type) {}
-Bread::Bread(const Bread& other) : Food(other), type_(other.type_) {}
-std::unique_ptr<Product> Bread::clone() const { return std::make_unique<Bread>(*this); }
-std::string Bread::toString() const { return Food::toString() + " | Type:" + type_; }
+Laptop::Laptop(int id, std::string name, Price p, Quantity q, Weight w, int warranty, std::string cpu)
+    : Electronics(id, std::move(name), p, q, w, warranty), cpu_(std::move(cpu)) {}
+
+std::unique_ptr<Product> Laptop::clone() const {
+    return std::make_unique<Laptop>(id_, name_, price_, quantity_, weight_, warrantyMonths_, cpu_);
+}
+
+void Laptop::print() const {
+    Electronics::print();
+    std::cout << " | CPU: " << cpu_ << "\n";
+}
+
+// Clothing
+Clothing::Clothing(int id, std::string name, Price p, Quantity q, Weight w, std::string material)
+    : Product(id, std::move(name), p, q, w), material_(std::move(material)) {}
+
+void Clothing::print() const {
+    std::cout << "[Clothing] ID: " << id_ << " | " << name_ 
+              << " | Цена: " << price_.getValue() << " | Кол-во: " << quantity_.getValue()
+              << " | Вес: " << weight_.getValue() << " кг | Материал: " << material_;
+}
+
+TShirt::TShirt(int id, std::string name, Price p, Quantity q, Weight w, std::string material, std::string size)
+    : Clothing(id, std::move(name), p, q, w, std::move(material)), size_(std::move(size)) {}
+
+std::unique_ptr<Product> TShirt::clone() const {
+    return std::make_unique<TShirt>(id_, name_, price_, quantity_, weight_, material_, size_);
+}
+
+void TShirt::print() const {
+    Clothing::print();
+    std::cout << " | Размер: " << size_ << "\n";
+}
+
+Jacket::Jacket(int id, std::string name, Price p, Quantity q, Weight w, std::string material, bool waterproof)
+    : Clothing(id, std::move(name), p, q, w, std::move(material)), waterproof_(waterproof) {}
+
+std::unique_ptr<Product> Jacket::clone() const {
+    return std::make_unique<Jacket>(id_, name_, price_, quantity_, weight_, material_, waterproof_);
+}
+
+void Jacket::print() const {
+    Clothing::print();
+    std::cout << " | Водонепроницаемый: " << (waterproof_ ? "Да" : "Нет") << "\n";
+}
+
+// Food
+Food::Food(int id, std::string name, Price p, Quantity q, Weight w, int expDays)
+    : Product(id, std::move(name), p, q, w), expirationDays_(expDays) {}
+
+void Food::print() const {
+    std::cout << "[Food] ID: " << id_ << " | " << name_ 
+              << " | Цена: " << price_.getValue() << " | Кол-во: " << quantity_.getValue()
+              << " | Вес: " << weight_.getValue() << " кг | Годен дней: " << expirationDays_;
+}
+
+Milk::Milk(int id, std::string name, Price p, Quantity q, Weight w, int expDays, double fat)
+    : Food(id, std::move(name), p, q, w, expDays), fatContent_(fat) {}
+
+std::unique_ptr<Product> Milk::clone() const {
+    return std::make_unique<Milk>(id_, name_, price_, quantity_, weight_, expirationDays_, fatContent_);
+}
+
+void Milk::print() const {
+    Food::print();
+    std::cout << " | Жирность: " << fatContent_ << "%\n";
+}
+
+Bread::Bread(int id, std::string name, Price p, Quantity q, Weight w, int expDays, bool wholeGrain)
+    : Food(id, std::move(name), p, q, w, expDays), wholeGrain_(wholeGrain) {}
+
+std::unique_ptr<Product> Bread::clone() const {
+    return std::make_unique<Bread>(id_, name_, price_, quantity_, weight_, expirationDays_, wholeGrain_);
+}
+
+void Bread::print() const {
+    Food::print();
+    std::cout << " | Цельнозерновой: " << (wholeGrain_ ? "Да" : "Нет") << "\n";
+}
