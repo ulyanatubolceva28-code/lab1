@@ -31,7 +31,6 @@ Warehouse::Warehouse(const Warehouse& other) : name_(other.name_ + " (Copy)"), c
     }
 }
 
-// Copy-and-Swap для гарантии безопасности исключений
 Warehouse& Warehouse::operator=(const Warehouse& other) {
     if (this != &other) {
         Warehouse temp(other);
@@ -88,8 +87,7 @@ std::unique_ptr<Product> Warehouse::extractById(int id) {
 
 bool Warehouse::removeById(int id) {
     auto item = extractById(id);
-    return item != nullptr; // item безопасно уничтожается здесь
-}
+    return item != nullptr;
 
 Product* Warehouse::findById(int id) const {
     for (const auto& item : products_) {
@@ -104,7 +102,7 @@ void Warehouse::transferProduct(int id, Warehouse& target) {
     if (this == &target) {
         throw std::invalid_argument("Нельзя перенести товар на тот же самый склад");
     }
-    // Проверка лимита целевого склада ДО извлечения (Strong Exception Guarantee)
+    
     if (target.isFull()) {
         throw std::runtime_error("Перенос невозможен: целевой склад '" + target.getName() + "' переполнен");
     }
