@@ -40,7 +40,6 @@ public:
     Warehouse(std::string name, size_t capacity);
     ~Warehouse() = default;
 
-    // Правило пяти (Rule of Five)
     Warehouse(const Warehouse& other);
     Warehouse& operator=(const Warehouse& other);
     Warehouse(Warehouse&& other) noexcept;
@@ -59,7 +58,7 @@ public:
 
     void transferProduct(int id, Warehouse& target);
 
-    // Поддержка Range-based for циклов
+
     WarehouseIterator begin();
     WarehouseIterator end();
     ConstWarehouseIterator begin() const;

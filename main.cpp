@@ -8,8 +8,8 @@ int main() {
         Warehouse whA("Главный Склад А", 5);
         Warehouse whB("Филиал Б", 3);
 
+        // Сгенерированный ID
         std::cout << "\n========== 2. СОЗДАНИЕ ТОВАРОВ (FACTORY: ID АВТО / ВРУЧНУЮ) ==========\n";
-        // ID == 0 -> сгенерируются: 1, 2, 3
         auto p1 = ProductFactory::createSmartphone(0, "iPhone 15", 999.99, 10, 0.2, 12, "iOS");
         auto p2 = ProductFactory::createLaptop(0, "MacBook Pro", 2499.00, 5, 1.5, 24, "M3 Pro");
         auto p3 = ProductFactory::createTShirt(0, "Polo", 45.0, 50, 0.25, "Хлопок", "M");

@@ -1,7 +1,7 @@
 #pragma once
 #include "product.h"
 
-// --- Категория: Электроника ---
+//Электроника
 class Electronics : public Product {
 protected:
     int warrantyMonths_;
@@ -28,7 +28,7 @@ public:
     void print() const override;
 };
 
-// --- Категория: Одежда ---
+//Одежда
 class Clothing : public Product {
 protected:
     std::string material_;
@@ -55,7 +55,7 @@ public:
     void print() const override;
 };
 
-// --- Категория: Продукты питания ---
+//Продукты питания
 class Food : public Product {
 protected:
     int expirationDays_;
