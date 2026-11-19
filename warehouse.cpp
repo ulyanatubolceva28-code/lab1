@@ -88,6 +88,7 @@ std::unique_ptr<Product> Warehouse::extractById(int id) {
 bool Warehouse::removeById(int id) {
     auto item = extractById(id);
     return item != nullptr;
+}
 
 Product* Warehouse::findById(int id) const {
     for (const auto& item : products_) {
